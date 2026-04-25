@@ -89,17 +89,23 @@ Decide:
 
 // ─── Stage 2: Retrieve + Answer ───────────────────────────────────────────────
 
+type Stage = "triage" | "retrieval" | "enrichment" | "answer";
+
 async function answer(
   message: string,
   triageResult: z.infer<typeof TriageSchema>,
   history: ChatTurn[],
+  onStage?: (stage: Stage) => void,
 ): Promise<AgentResponse> {
+  onStage?.("retrieval");
   const retrieved = await retrieve(triageResult.reformulatedQuery);
   if (retrieved.length === 0) {
     return { kind: "no-basis", message: NO_BASIS_SENTENCE, retrieved: [] };
   }
 
+  onStage?.("enrichment");
   const { text: enrichText, webSources } = await runEnrichment(message, triageResult.reformulatedQuery);
+  onStage?.("answer");
   const ctx = conversationContext(history);
 
   const enrichmentSection = enrichText
@@ -144,11 +150,13 @@ You are Sandigan, a Philippine labor-rights assistant.
 export async function runAgent(
   message: string,
   history: ChatTurn[],
+  onStage?: (stage: Stage) => void,
 ): Promise<AgentResponse> {
   if (!message.trim()) {
     return { kind: "error", message: COPY.emptyInput };
   }
 
+  onStage?.("triage");
   let triageResult: z.infer<typeof TriageSchema>;
   try {
     triageResult = await triage(message, history);
@@ -170,7 +178,7 @@ export async function runAgent(
   }
 
   try {
-    return await answer(message, triageResult, history);
+    return await answer(message, triageResult, history, onStage);
   } catch (err) {
     return { kind: "error", message: getErrorMessage(err, "answer") };
   }
