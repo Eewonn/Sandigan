@@ -16,5 +16,5 @@
 ## Features
 
 - [ ] Vercel deployment — `vercel deploy --prod`, set `GROQ_API_KEY`, `HUGGINGFACE_API_KEY`,
-  and `SERPAPI_API_KEY` in the Vercel dashboard environment variables.
+  and `TAVILY_API_KEY` in the Vercel dashboard environment variables.
 - [ ] Analytics — track clarify/answer/no-basis rates
